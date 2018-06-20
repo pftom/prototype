@@ -3,15 +3,34 @@ const cp = require('child_process');
 const path = require('path');
 const tmp = require('tmp');
 
-const { EXPLAIN_PLACEHOLDER } = require('../utils/common');
+const exampleRepo = [
+  {
+    message: 'Commit 1',
+    files: ['test1.js', 'test2.js'],
+  },
+  {
+    message: 'Commit 2',
+    files: ['package-lock.json'],
+  },
+];
 
 /**
- * Run any tuture command.
- * @param {Array} args array of arguments
- * @returns {ChildProcess} spawned ChildProcess
+ * Factory of functions running tuture commands in a given directory.
  */
-function run(args) {
-  return cp.spawnSync('tuture', args);
+function tutureRunnerFactory(cwd) {
+  return function(args) {
+    const tuturePath = path.join(__dirname, '..', 'bin', 'tuture');
+    return cp.spawnSync('node', [tuturePath, ...args], { cwd: cwd });
+  }
+}
+
+/**
+ * Factory of functions running git commands in a given directory.
+ */
+function gitRunnerFactory(cwd) {
+  return function(args) {
+    return cp.spawnSync('git', args, { cwd: cwd });
+  }
 }
 
 /**
@@ -30,36 +49,30 @@ function createEmptyDir() {
  */
 function createGitRepo(repo, ignoreTuture = false) {
   const repoPath = tmp.dirSync().name;
+  const gitRunner = gitRunnerFactory(repoPath);
 
-  process.chdir(repoPath);
-  cp.execSync(`git init`);
+  gitRunner(['init']);
+
   repo.forEach(commit => {
     commit.files.forEach(fileName => {
       const dir = path.parse(fileName).dir;
-      if (dir) fs.mkdirpSync(dir);
+      if (dir) fs.mkdirpSync(path.join(repoPath, dir));
       if (fileName === '.gitignore' && ignoreTuture) {
-        fs.writeFileSync(fileName, '.tuture\n');
+        fs.writeFileSync(path.join(repoPath, fileName), '.tuture\n');
       } else {
-        cp.execSync(`touch ${fileName}`);
+        fs.createFileSync(path.join(repoPath, fileName));
       }
     });
-    cp.execSync(`git add ${commit.files.join(' ')}`);
-    cp.execSync(`git commit -m '${commit.message}'`);
+    gitRunner(['add', ...commit.files]);
+    gitRunner(['commit', '-m', commit.message]);
   });
 
   return repoPath;
 }
 
-function createTutureSuite() {
-  const tuturePath = tmp.dirSync().name;
-  process.chdir(tuturePath);
-  fs.mkdirpSync(path.join('.tuture', 'diff'));
-  fs.createFileSync('tuture.yml');
-
-  return tuturePath;
-}
-
-exports.run = run;
+exports.exampleRepo = exampleRepo;
+exports.tutureRunnerFactory = tutureRunnerFactory;
+exports.gitRunnerFactory = gitRunnerFactory;
 exports.createEmptyDir = createEmptyDir;
 exports.createGitRepo = createGitRepo;
 exports.createTutureSuite = createTutureSuite;

@@ -1,49 +1,39 @@
-const path = require('path');
+const utils = require('./utils');
 
-const { run } = require('./utils');
 const { version } = require('../package.json');
 
 describe('tuture', () => {
 
-  describe('(no args)', () => {
-    it('should output help message', () => {
-      matchHelpMessage(run([]).stdout);
-    });
+  const tutureRunner = utils.tutureRunnerFactory('.');
+
+  test('output help message', () => {
+    // no args given
+    matchHelpMessage(tutureRunner([]).stdout);
+
+    // -h option given
+    matchHelpMessage(tutureRunner(['-h']).stdout);
+
+    // --help option given
+    matchHelpMessage(tutureRunner(['--help']).stdout);
   });
 
-  describe('-h', () => {
-    it('should output help message', () => {
-      matchHelpMessage(run(['-h']).stdout);
-    });
+  test('output version number', () => {
+    // -V option given
+    expect(tutureRunner(['-V']).stdout.toString()).toMatch(version);
+
+    // --version option given
+    expect(tutureRunner(['--version']).stdout.toString()).toMatch(version);
   });
 
-  describe('--help', () => {
-    it('should output help message', () => {
-      matchHelpMessage(run(['--help']).stdout);
-    });
-  });
+  test('unknown args', () => {
+    // unknown commands given
+    expect(tutureRunner(['foobar']).status).toBe(1);
 
-  describe('-V', () => {
-    it('should output version number', () => {
-      expect(run(['-V']).stdout.toString()).toMatch(version);
-    });
-  });
+    // unknown options (shorthand) given
+    expect(tutureRunner(['-f']).status).toBe(1);
 
-  describe('--version', () => {
-    it('should output version number', () => {
-      expect(run(['--version']).stdout.toString()).toMatch(version);
-    });
-  });
-
-  describe('(unknown args)', () => {
-    it('should exit(1) when unknown commands are given', () => {
-      expect(run(['foobar']).status).toBe(1);
-    });
-
-    it('should exit(1) when unknown options are given', () => {
-      expect(run(['-f']).status).toBe(1);
-      expect(run(['--foobar']).status).toBe(1);
-    });
+    // unknown options given
+    expect(tutureRunner(['--foobar']).status).toBe(1);
   });
 });
 

@@ -7,33 +7,41 @@ let tmpDirs = Array();
 
 describe('tuture destroy', () => {
 
-  afterAll(() => {
-    tmpDirs.forEach(dir => fs.removeSync(dir));
-    process.chdir(path.join(__dirname, '..'));
-  });
+  afterAll(() => tmpDirs.forEach(dir => fs.removeSync(dir)));
 
   describe('normal destroy', () => {
-    const tuturePath = utils.createTutureSuite();
-    tmpDirs.push(tuturePath);
-    process.chdir(tuturePath);
-    const cp = utils.run(['destroy', '-f']);
+    const repoPath = utils.createGitRepo();
+    const tutureRunner = utils.tutureRunnerFactory(repoPath);
+    tmpDirs.push(repoPath);
+
+    tutureRunner(['init', '-y']);
+
+    const cp = tutureRunner(['destroy', '-f']);
 
     it('should exit with status 0', () => {
       expect(cp.status).toBe(0);
     });
 
     it('should delete all tuture files', () => {
-      process.chdir(tuturePath);
-      expect(fs.existsSync(path.join('.tuture', 'diff'))).toBe(false);
-      expect(fs.existsSync('tuture.yml')).toBe(false);
+      expect(fs.existsSync(path.join(repoPath, '.tuture', 'diff'))).toBe(false);
+      expect(fs.existsSync(path.join(repoPath, 'tuture.yml'))).toBe(false);
+    });
+
+    it('should have no post-commit git hook', () => {
+      const hookPath = path.join(repoPath, '.git', 'hooks', 'post-commit');
+      if (fs.existsSync(hookPath)) {
+        const hook = fs.readFileSync(hookPath).toString();
+        expect(hook).toEqual(expect.not.stringContaining('tuture reload'));
+      }
     });
   });
 
   describe('no tuture files present', () => {
     const nonTuturePath = utils.createEmptyDir();
+    const tutureRunner = utils.tutureRunnerFactory(nonTuturePath);
     tmpDirs.push(nonTuturePath);
-    process.chdir(nonTuturePath);
-    const cp = utils.run(['destroy', '-f']);
+
+    const cp = tutureRunner(['destroy', '-f']);
 
     it('should refuse to destroy', () => {
       expect(cp.status).toBe(1);

@@ -1,15 +1,17 @@
 {
   "name": "tuture",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Tuture makes writing interactive, step-by-step tutorials enjoyable.",
   "main": "index.js",
   "preferGlobal": true,
   "keywords": [
     "tutorial",
-    "learn-by-example"
+    "learn-by-doing",
+    "step-by-step",
+    "git",
+    "yml"
   ],
   "scripts": {
-    "pretest": "npm un -g && npm i -g",
     "test": "jest",
     "lint": "eslint **/*.js"
   },
@@ -26,8 +28,10 @@
   },
   "homepage": "https://github.com/tutureproject/tuture#readme",
   "files": [
-    "index.js",
-    "utils/"
+    "LICENSE",
+    "README.md",
+    "bin/",
+    "lib/"
   ],
   "dependencies": {
     "commander": "^2.15.1",
@@ -46,5 +50,12 @@
     "eslint-plugin-react": "^7.8.2",
     "jest": "^23.0.1",
     "tmp": "^0.0.33"
+  },
+  "jest": {
+    "collectCoverageFrom": [
+      "index.js",
+      "lib/*.js"
+    ],
+    "verbose": true
   }
 }

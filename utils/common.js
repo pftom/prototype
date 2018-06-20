@@ -4,7 +4,6 @@ const minimatch = require('minimatch');
 const path = require('path');
 const signale = require('signale');
 
-exports.EXPLAIN_PLACEHOLDER = '<YOUR EXPLANATION HERE>';
 exports.TUTURE_ROOT = '.tuture';
 
 // Filename patterns that shoule be collapsed in renderer.
@@ -36,6 +35,7 @@ exports.removeTutureSuite = async () => {
 };
 
 /**
+<<<<<<< HEAD:utils/common.js
  * Check cwd is a valid Git repo with at least one commit.
  */
 exports.checkGitEnv = () => {
@@ -44,4 +44,12 @@ exports.checkGitEnv = () => {
     signale.fatal(subprocess.stderr.toString().replace('fatal:', ''));
     process.exit(1);
   }
+=======
+ * Output error message and exit with status 1.
+ * @param {String} message Error message
+ */
+exports.errAndExit = (message) => {
+  signale.fatal(message.trim().replace('fatal: ', ''));
+  process.exit(1);
+>>>>>>> upstream/master:lib/common.js
 };
