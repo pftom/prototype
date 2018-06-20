@@ -35,21 +35,10 @@ exports.removeTutureSuite = async () => {
 };
 
 /**
-<<<<<<< HEAD:utils/common.js
- * Check cwd is a valid Git repo with at least one commit.
- */
-exports.checkGitEnv = () => {
-  const subprocess = cp.spawnSync('git', ['log']);
-  if (subprocess.status) {
-    signale.fatal(subprocess.stderr.toString().replace('fatal:', ''));
-    process.exit(1);
-  }
-=======
  * Output error message and exit with status 1.
  * @param {String} message Error message
  */
 exports.errAndExit = (message) => {
   signale.fatal(message.trim().replace('fatal: ', ''));
   process.exit(1);
->>>>>>> upstream/master:lib/common.js
 };
