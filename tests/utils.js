@@ -70,9 +70,20 @@ function createGitRepo(repo, ignoreTuture = false) {
   return repoPath;
 }
 
+/**
+ * Parse internal json files.
+ * @param {string} repoPath Path to the repository
+ * @param {string} fileName Filename of the internal JSON file
+ */
+function parseInternalFile(repoPath, fileName) {
+  return JSON.parse(
+    fs.readFileSync(path.join(repoPath, '.tuture', fileName))
+  );
+}
+
 exports.exampleRepo = exampleRepo;
 exports.tutureRunnerFactory = tutureRunnerFactory;
 exports.gitRunnerFactory = gitRunnerFactory;
 exports.createEmptyDir = createEmptyDir;
 exports.createGitRepo = createGitRepo;
-exports.createTutureSuite = createTutureSuite;
+exports.parseInternalFile = parseInternalFile;

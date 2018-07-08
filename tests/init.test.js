@@ -8,7 +8,7 @@ const { shouldBeCollapsed } = require('../lib/common');
 // Tmp directories used in tests.
 let tmpDirs = Array();
 
-describe('tuture init', () => {
+describe('tuture init -y', () => {
 
   afterAll(() => tmpDirs.forEach(dir => fs.removeSync(dir)));
 
@@ -17,9 +17,16 @@ describe('tuture init', () => {
     const tutureRunner = utils.tutureRunnerFactory(nonRepoPath);
     tmpDirs.push(nonRepoPath);
 
-    it('should refuse to init', () => {
-      const cp = tutureRunner(['init', '-y']);
-      expect(cp.status).toBe(1);
+    const cp = tutureRunner(['init', '-y']);
+
+    it('should exit with status 0', () => {
+      expect(cp.status).toBe(0);
+    });
+
+    it('should have all needed files created', () => {
+      expect(fs.existsSync(path.join(nonRepoPath, 'tuture.yml'))).toBe(true);
+      expect(fs.existsSync(path.join(nonRepoPath, '.tuture', 'tuture.json'))).toBe(true);
+      expect(fs.existsSync(path.join(nonRepoPath, '.tuture', 'diff.json'))).toBe(true);
     });
   });
 
@@ -89,17 +96,6 @@ describe('tuture init', () => {
       ];
       testInit(testRepo);
     });
-
-    describe('no commit at all', () => {
-      const repoPath = utils.createGitRepo([]);
-      const tutureRunner = utils.tutureRunnerFactory(repoPath);
-      tmpDirs.push(repoPath);
-
-      it('should refuse to init', () => {
-        const cp = tutureRunner(['init', '-y']);
-        expect(cp.status).toBe(1);
-      });
-    });
   });
 });
 
@@ -117,17 +113,24 @@ function testInit(testRepo = utils.exampleRepo, ignoreTuture = false) {
     expect(cp.status).toBe(0);
   });
 
-  it('should create .tuture/diff directory', () => {
-    const diffPath = path.join(repoPath, '.tuture', 'diff');
-    expect(fs.existsSync(diffPath)).toBe(true);
-    expect(fs.readdirSync(diffPath).length).toBe(expectedRepo.length);
+  it('should create valid diff.json', () => {
+    const diffContent = utils.parseInternalFile(repoPath, 'diff.json');
+    expect(diffContent).toHaveLength(expectedRepo.length);
+    expect(diffContent[0]).toHaveProperty('commit');
+    expect(diffContent[0]).toHaveProperty('diff');
   });
 
-  it('should create correct tuture.yml with default values', () => {
+  it('should create correct tuture.[yml|json] with default values', () => {
     const tutureYmlPath = path.join(repoPath, 'tuture.yml');
+    const tutureJsonPath = path.join(repoPath, '.tuture', 'tuture.json');
     expect(fs.existsSync(tutureYmlPath)).toBe(true);
+    expect(fs.existsSync(tutureJsonPath)).toBe(true);
 
+    // Test if tuture.yml and tuture.json are strictly equivalent.
     const tuture = yaml.safeLoad(fs.readFileSync(tutureYmlPath));
+    const tuture2 = utils.parseInternalFile(repoPath, 'tuture.json');
+    expect(tuture).toStrictEqual(tuture2);
+
     testTutureObject(tuture, expectedRepo);
   });
 
@@ -138,7 +141,7 @@ function testInit(testRepo = utils.exampleRepo, ignoreTuture = false) {
     const ignoreRules = fs.readFileSync(gitignorePath).toString();
 
     // .tuture is ignored.
-    expect(ignoreRules.indexOf('.tuture')).not.toBe(-1);
+    expect(ignoreRules).toContain('.tuture');
 
     // .tuture is ignored only once.
     expect(ignoreRules.indexOf('.tuture')).toBe(ignoreRules.lastIndexOf('.tuture'));
@@ -151,14 +154,14 @@ function testTutureObject(tuture, expectedRepo) {
   expect(tuture.version).toBe('0.0.1');
   expect(tuture.language).toBe('en');
 
-  expect(tuture.steps.length).toBe(expectedRepo.length);
+  expect(tuture.steps).toHaveLength(expectedRepo.length);
 
   const steps = tuture.steps;
 
   // Check equivalence of each step.
   for (let i = 0; i < steps.length; i++) {
     expect(steps[i].name).toBe(expectedRepo[i].message);
-    expect(steps[i].diff.length).toBe(expectedRepo[i].files.length);
+    expect(steps[i].diff).toHaveLength(expectedRepo[i].files.length);
 
     for (let j = 0; j < expectedRepo[i].files.length; j++) {
       expect(steps[i].diff[j].file).toBe(expectedRepo[i].files[j]);

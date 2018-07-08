@@ -4,7 +4,13 @@
 
 Initialize a Tuture tutorial.
 
-Tuture will prompt you to answer following questions (if `-y` or `--yes` option is not given):
+This command will go through following procedures:
+
+1. Check if Git is installed on your machine. If not, Tuture will stop and output error message.
+
+2. Check if current working directory is a Git repo. If you are not in a Git repo and `-y` option is not given, Tuture will ask for confirmation on whether you would like to initialize one. If your answer is no, Tuture will abort this command. Otherwise, Tuture will run `git init` in cwd and move on.
+
+3. Prompt you to answer following questions (if `-y` or `--yes` option is not given):
 
 | Prompt             | Fields     | Required/Optional | Default            | Meaning                                                      |
 | ------------------ | ---------- | ----------------- | ------------------ | ------------------------------------------------------------ |
@@ -14,22 +20,9 @@ Tuture will prompt you to answer following questions (if `-y` or `--yes` option 
 | Topics? | `topics` | Optional  | javascript,  git, cli | Topics of this tutorial, separated with spaces or commas, such as `express, mongodb` |
 | Maintainer email? | `email` | Optional | me@example.com | Maintainer email of this tutorial |
 
-Afterwards following files will be generated:
+4. Create **tuture.yml** which is everything you need to write your tutorial (refer to [tuture.yml Specification](TUTURE_YML_SPEC.md) for detailed information), and **.tuture** directory which houses diff data of each commit.
 
-- **tuture.yml**. This file is everthing you need to write your tutorial, and for detailed information please refer to [tuture.yml Specification](TUTURE_YML_SPEC.md).
-
-- **.tuture** directory. This houses diff data of each commit used by Tuture.
-
-```
-.tuture
-└── diff
-    ├── 084a277.diff
-    ├── e4a9539.diff
-    ├── f898719.diff
-    └── fefe569.diff
-```
-
-Meanwhile, following rules will be appended to your `.gitignore` (Tuture will create one if not exists):
+5. Append following rule to your `.gitignore` (Tuture will create one if not exists):
 
 ```
 # Tuture supporting files
@@ -37,9 +30,7 @@ Meanwhile, following rules will be appended to your `.gitignore` (Tuture will cr
 .tuture
 ```
 
-### Preconditions
-
-Current working directory should be a Git repo with at least one commit.
+6. Add Git post-commit hook for calling `tuture reload` after each commit (create one if not exists).
 
 ### Options
 
